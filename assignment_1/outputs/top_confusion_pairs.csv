@@ -1,0 +1,11 @@
+true_label,pred_label,count
+people,indoor,66
+people,urban,54
+people,nature,33
+people,sports,32
+people,water,27
+people,transport,24
+people,animals,11
+nature,sports,8
+nature,people,6
+animals,people,5

@@ -1,6 +1,15 @@
 
 # Assignment 1 - Model Comparison
 
+## Thông tin nhóm
+- **Tên nhóm:** GROUP 02
+- **Giảng viên môn học:** TS. Lê Thành Sách
+
+## Thành viên
+1. Lý Minh Trung - 2570349
+2. Ngô Nhất Toàn - 2570515
+3. Nguyễn Thái Thành Đạt - 2570387
+
 Repository này bao gồm các thí nghiệm so sánh mô hình trên 3 loại dữ liệu khác nhau: ảnh, văn bản và đa phương thức.
 
 ## 4.1 Image Dataset (Dữ liệu ảnh)
