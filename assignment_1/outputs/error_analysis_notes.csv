@@ -1,4 +1,0 @@
-sample_idx,true_label,pred_label,confidence,top_tokens,short_explanation
-210,people,urban,0.9924,"street, with, vests",Mô hình bị hút bởi các tín hiệu nghiêng về 'urban' trong caption/vùng ảnh nổi bật.
-912,people,urban,0.9866,"street, walk, group",Mô hình bị hút bởi các tín hiệu nghiêng về 'urban' trong caption/vùng ảnh nổi bật.
-312,people,sports,0.9794,"ball, floats, compete",Mô hình bị hút bởi các tín hiệu nghiêng về 'sports' trong caption/vùng ảnh nổi bật.
