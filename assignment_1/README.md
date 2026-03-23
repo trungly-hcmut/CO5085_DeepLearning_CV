@@ -9,11 +9,11 @@
 2. Ngô Nhất Toàn - 2570515
 3. Nguyễn Thái Thành Đạt - 2570387
 
-Repository này bao gồm các thí nghiệm so sánh mô hình trên 3 loại dữ liệu khác nhau: ảnh, văn bản và đa phương thức.
+Repository này bao gồm các thí nghiệm so sánh mô hình phân loại trên 3 loại dữ liệu khác nhau: ảnh, văn bản và đa phương thức.
 
 ---
 
-## 4.1 Image Dataset (Dữ liệu ảnh)
+## 1 Image Classification (Phân loại ảnh)
 So sánh hai nhóm mô hình:
 - CNN (Convolutional Neural Networks)
 - ViT (Vision Transformer)
@@ -24,7 +24,7 @@ Sử dụng mô hình pretrained, thực hiện fine-tuning và đánh giá kế
 
 ---
 
-## 4.2 Text Dataset (Dữ liệu văn bản)
+## 2 Text Classification (Phân loại văn bản)
 So sánh hai nhóm mô hình:
 - RNN (Recurrent Neural Networks - ví dụ LSTM)
 - Transformer
@@ -33,7 +33,7 @@ So sánh hai nhóm mô hình:
 
 ---
 
-## 4.3 Multimodal Dataset (Dữ liệu đa phương thức)
+## 3 Multimodal Classification (Phân loại phương thức)
 So sánh hai cách tiếp cận:
 - Zero-shot classification
 - Few-shot classification
@@ -42,10 +42,16 @@ So sánh hai cách tiếp cận:
 
 ---
 
-## 5. Reports
+## 4. Reports
 Các báo cáo tổng hợp kết quả và phân tích được lưu trong thư mục `reports`:
 - [PDF Report](./reports/assignment1_report.pdf)
 - [Presentation (PPT)](./reports/assignment1_presentation.pptx)
+
+---
+
+## 5. Videos
+- **Video demo của bài tập:** [Demo Video](https://example.com/demo_video)
+- **Video trình bày báo cáo (YouTube):** [Presentation Video](https://example.com/presentation_video)
 
 ---
 
