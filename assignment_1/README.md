@@ -29,6 +29,8 @@ So sánh hai nhóm mô hình:
 - RNN (Recurrent Neural Networks - ví dụ LSTM)
 - Transformer
 
+Sử dụng mô hình pretrained, thực hiện fine-tuning và đánh giá kết quả.
+
 [Text Classification Notebook](./text_classification.ipynb)
 
 ---
@@ -37,6 +39,8 @@ So sánh hai nhóm mô hình:
 So sánh hai cách tiếp cận:
 - Zero-shot classification
 - Few-shot classification
+
+Sử dụng mô hình pretrained, thực hiện fine-tuning và đánh giá kết quả.
 
 [Multimodal Classification Notebook](./multimodal_classification.ipynb)
 
@@ -50,8 +54,8 @@ Các báo cáo tổng hợp kết quả và phân tích được lưu trong thư
 ---
 
 ## 5. Videos
-- **Video demo của bài tập:** [Demo Video](https://example.com/demo_video)
-- **Video trình bày báo cáo (YouTube):** [Presentation Video](https://example.com/presentation_video)
+- **Video demo của bài tập:** [Demo Video](https://youtu.be/RP4IDXZz6vw)
+- **Video trình bày báo cáo (YouTube):** [Presentation Video](https://youtu.be/fZLrMmT3yR8)
 
 ---
 
