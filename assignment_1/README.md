@@ -54,8 +54,8 @@ Các báo cáo tổng hợp kết quả và phân tích được lưu trong thư
 ---
 
 ## 5. Videos
-- **Video demo của bài tập:** [Demo Video](https://youtu.be/RP4IDXZz6vw)
-- **Video trình bày báo cáo (YouTube):** [Presentation Video](https://youtu.be/fZLrMmT3yR8)
+- **Video demo của bài tập:** [Demo Video](https://www.youtube.com/watch?v=RP4IDXZz6vw)
+- **Video trình bày báo cáo (YouTube):** [Presentation Video](https://www.youtube.com/watch?v=fZLrMmT3yR8)
 
 ---
 
