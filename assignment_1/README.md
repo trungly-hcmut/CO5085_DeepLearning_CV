@@ -1,4 +1,3 @@
-
 # Assignment 1 - Model Comparison
 
 ## Thông tin nhóm
@@ -11,6 +10,8 @@
 3. Nguyễn Thái Thành Đạt - 2570387
 
 Repository này bao gồm các thí nghiệm so sánh mô hình trên 3 loại dữ liệu khác nhau: ảnh, văn bản và đa phương thức.
+
+---
 
 ## 4.1 Image Dataset (Dữ liệu ảnh)
 So sánh hai nhóm mô hình:
@@ -38,6 +39,13 @@ So sánh hai cách tiếp cận:
 - Few-shot classification
 
 [Multimodal Classification Notebook](./multimodal_classification.ipynb)
+
+---
+
+## 5. Reports
+Các báo cáo tổng hợp kết quả và phân tích được lưu trong thư mục `reports`:
+- [PDF Report](./reports/assignment1_report.pdf)
+- [Presentation (PPT)](./reports/assignment1_presentation.pptx)
 
 ---
 
