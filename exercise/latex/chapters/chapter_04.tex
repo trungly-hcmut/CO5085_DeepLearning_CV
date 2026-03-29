@@ -1,2 +1,104 @@
 % !TeX root = ../main.tex
-\section{Tự hiện thực TransformerEncoder và ViT}
+\section{Phần 3 --- Tự hiện thực TransformerEncoder và ViT}
+
+\subsection{Mục tiêu}
+Phần này nhằm kiểm chứng khả năng hiện thực nội bộ Transformer bằng các phép toán cơ bản của PyTorch, sau đó so sánh chất lượng mô hình ViT tự xây với ViT dùng encoder có sẵn. Yêu cầu 3.3 được đáp ứng thông qua hai mô hình \textbf{ViT\_scratch} và \textbf{ViT\_builtin}.
+
+\subsection{Kiến trúc mô hình}
+Với ảnh đầu vào \(\mathbf{x}\in\mathbb{R}^{3\times H\times W}\), số patch là:
+\[
+N = \left(\frac{H}{P}\right)\left(\frac{W}{P}\right).
+\]
+Patch embedding được viết dưới dạng:
+\[
+\mathbf{x}_p^i = W_p\,\mathrm{vec}(\mathbf{x}^i)+b_p,\quad i=1,\dots,N,
+\]
+và chuỗi đầu vào encoder:
+\[
+\mathbf{z}_0 = [\mathbf{x}_{cls};\mathbf{x}_p^1;\dots;\mathbf{x}_p^N] + E_{pos}.
+\]
+
+Mỗi block encoder gồm MHSA và FFN với residual connection:
+\[
+\mathbf{z}' = \mathbf{z} + \mathrm{MHSA}(\mathrm{LN}(\mathbf{z})),
+\quad
+\mathbf{z}'' = \mathbf{z}' + \mathrm{FFN}(\mathrm{LN}(\mathbf{z}')).
+\]
+Attention tại từng head:
+\[
+\mathrm{Attn}(Q,K,V)=\mathrm{softmax}\left(\frac{QK^\top}{\sqrt{d_h}}\right)V.
+\]
+
+Head phân loại dùng token \(CLS\):
+\[
+\hat{y}=W_o\,\mathbf{z}_{CLS}^{(L)}+b_o.
+\]
+
+\subsection{Thiết lập huấn luyện}
+\begin{itemize}
+    \item Dataset: CIFAR-10; chia train/validation theo tỉ lệ 80/20 từ tập train.
+    \item Batch size: 128; optimizer: AdamW; learning rate: \(10^{-3}\); weight decay: \(10^{-4}\).
+    \item Epoch: 20; lưu mô hình tốt nhất theo F1-score trên validation.
+    \item Chỉ số báo cáo: Loss, Accuracy, Precision, Recall, F1-score, Train time.
+\end{itemize}
+
+\subsection{Kết quả và thảo luận}
+
+\subsubsection{So sánh số tham số}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcc}
+        \hline
+        \textbf{Mô hình} & \textbf{Trainable params} & \textbf{Trainable params (M)} \\
+        \hline
+        ViT\_scratch & 811146 & 0.811146 \\
+        ViT\_builtin & 811146 & 0.811146 \\
+        \hline
+    \end{tabular}
+    \caption{Số tham số trainable của hai mô hình ViT trong Phần 3}
+    \label{tab:part3_params}
+\end{table}
+
+\subsubsection{Kết quả trên tập test}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcccccc}
+        \hline
+        \textbf{Mô hình} & \textbf{Loss} & \textbf{Acc} & \textbf{Prec.} & \textbf{Recall} & \textbf{F1} & \textbf{Time (s)} \\
+        \hline
+        ViT\_builtin & 0.952527 & 0.6660 & 0.670091 & 0.6660 & 0.662395 & 938.115663 \\
+        ViT\_scratch & 0.946633 & 0.6642 & 0.664090 & 0.6642 & 0.662061 & 907.518761 \\
+        \hline
+    \end{tabular}
+    \caption{Kết quả thực nghiệm Phần 3 trên tập test}
+    \label{tab:part3_results}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \IfFileExists{images/part3_histories.png}{
+        \includegraphics[width=0.9\textwidth]{images/part3_histories.png}
+    }{
+        \fbox{\parbox{0.88\textwidth}{
+        Placeholder: biểu đồ training history của Phần 3 (loss, accuracy, F1 theo epoch).}}
+    }
+    \caption{Training history của ViT\_scratch và ViT\_builtin}
+    \label{fig:part3_histories}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \IfFileExists{images/part3_confusion_matrices.png}{
+        \includegraphics[width=0.9\textwidth]{images/part3_confusion_matrices.png}
+    }{
+        \fbox{\parbox{0.88\textwidth}{
+        Placeholder: confusion matrix của hai mô hình trong Phần 3.}}
+    }
+    \caption{Confusion matrix của các mô hình ViT trong Phần 3}
+    \label{fig:part3_confusion}
+\end{figure}
+
+Kết quả cho thấy hai mô hình có hiệu năng gần tương đương. \textbf{ViT\_builtin} đạt Accuracy/F1 nhỉnh hơn nhẹ (0.6660/0.662395), trong khi \textbf{ViT\_scratch} có thời gian huấn luyện thấp hơn. Quan sát này xác nhận encoder tự hiện thực hoạt động đúng và đạt chất lượng sát baseline.
+
+\subsection{Kết luận}
+Phần 3 đã hiện thực đầy đủ TransformerEncoder từ các phép toán cơ bản, tích hợp thành ViT hoàn chỉnh và so sánh định lượng với phiên bản dùng khối có sẵn. Đây là cơ sở để mở rộng sang các biến thể kiến trúc ở Phần 4.

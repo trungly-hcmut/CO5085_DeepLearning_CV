@@ -1,3 +1,148 @@
 % !TeX root = ../main.tex
-\section{Các kiến trúc kết hợp và cách embed ảnh khác
-nhau}
+\section{Phần 4 --- Các kiến trúc kết hợp và cách embed ảnh khác nhau}
+
+\subsection{Mục tiêu}
+Mục tiêu của phần này là khảo sát các chiến lược biểu diễn token và thiết kế kiến trúc khác nhau trên cùng bài toán CIFAR-10, từ đó đánh giá trade-off giữa hiệu năng và chi phí huấn luyện. Bài làm triển khai 4 hướng:
+\begin{itemize}
+    \item \textbf{Hybrid\_CNN\_Transformer}
+    \item \textbf{ViT\_overlap\_patch}
+    \item \textbf{ViT\_patch8\_nonoverlap}
+    \item \textbf{Transformer\_channel\_tokens}
+\end{itemize}
+
+\subsection{Thiết kế kiến trúc và biểu diễn token}
+
+\subsubsection{Hybrid CNN + Transformer}
+CNN backbone trích đặc trưng không gian trước khi đưa vào Transformer. Feature map được ánh xạ thành chuỗi token:
+\[
+\mathbf{F}\in\mathbb{R}^{C\times H'\times W'}
+\rightarrow
+\mathbf{T}\in\mathbb{R}^{(H'W')\times D}.
+\]
+Với ảnh \(32\times32\), thiết kế hiện tại tạo \(N=64\) token (chưa tính \(CLS\)).
+
+\subsubsection{Overlap patch embedding}
+Token được tạo bằng cửa sổ trượt \(P\times P\) với stride \(S\):
+\[
+N_{overlap}=\left(\left\lfloor\frac{H-P}{S}\right\rfloor+1\right)^2.
+\]
+Trường hợp \(H=W=32\), \(P=4\), \(S=2\) cho \(N=225\) token.
+
+\subsubsection{Patch kích thước lớn hơn}
+Khi tăng patch size lên \(8\times8\):
+\[
+N = \left(\frac{32}{8}\right)^2 = 16.
+\]
+Số token giảm giúp giảm chi phí attention nhưng làm giảm độ chi tiết cục bộ.
+
+\subsubsection{Channel-token embedding}
+Ảnh được biểu diễn theo chiều kênh, mỗi kênh là một token sau phép chiếu tuyến tính:
+\[
+\mathbf{x}\in\mathbb{R}^{C\times H\times W}
+\rightarrow
+\mathbf{T}\in\mathbb{R}^{C\times D}.
+\]
+Với RGB, \(N=3\) token.
+
+\subsubsection{Ảnh hưởng của số token đến chi phí attention}
+Độ phức tạp attention xấp xỉ bậc hai theo số token:
+\[
+\mathrm{Cost}_{attn} \propto N^2\cdot D.
+\]
+Vì vậy, các chiến lược tăng \(N\) thường cải thiện khả năng biểu diễn nhưng kéo theo chi phí huấn luyện cao hơn.
+
+\subsection{Quy trình huấn luyện và đánh giá}
+Thiết lập huấn luyện giữ nguyên so với Phần 3 (AdamW, batch size 128, theo dõi Loss/Accuracy/Precision/Recall/F1), với \textbf{15 epoch} cho Phần 4. Mô hình tốt nhất được chọn theo F1-score trên validation trước khi đánh giá test.
+
+Các bước thực hiện:
+\begin{enumerate}
+    \item Forward theo từng kiến trúc.
+    \item Tính \texttt{CrossEntropyLoss}, backpropagation và cập nhật tham số.
+    \item Lưu checkpoint tốt nhất theo F1-score validation.
+    \item Đánh giá trên tập test và tổng hợp bảng kết quả.
+\end{enumerate}
+
+\subsection{Bảng thông số biểu diễn}
+\begin{table}[H]
+	\centering
+	\begin{tabular}{lccc}
+		\hline
+		\textbf{Mô hình} & \textbf{Số token (không CLS)} & \textbf{Depth} & \textbf{Params (M)} \\
+		\hline
+		Hybrid\_CNN\_Transformer & 64  & 4 & 0.632074 \\
+		ViT\_overlap\_patch & 225 & 6 & 0.831754 \\
+		ViT\_patch8\_nonoverlap & 16 & 6 & 0.823434 \\
+		Transformer\_channel\_tokens & 3 & 4 & 0.663306 \\
+		\hline
+	\end{tabular}
+	\caption{So sánh số token và số tham số giữa các biến thể Phần 4}
+	\label{tab:part4_repr}
+\end{table}
+
+\subsection{Kết quả thực nghiệm}
+\begin{table}[H]
+	\centering
+	\begin{tabular}{lcccccc}
+		\hline
+		\textbf{Mô hình} & \textbf{Loss} & \textbf{Acc} & \textbf{Prec.} & \textbf{Recall} & \textbf{F1} & \textbf{Time (s)} \\
+		\hline
+		Hybrid\_CNN\_Transformer & 0.703208 & 0.7581 & 0.762347 & 0.7581 & 0.757941 & 654.367661 \\
+		ViT\_overlap\_patch & 0.941041 & 0.6649 & 0.662547 & 0.6649 & 0.662503 & 1726.268286 \\
+		ViT\_patch8\_nonoverlap & 1.078542 & 0.6178 & 0.622555 & 0.6178 & 0.618390 & 521.702917 \\
+		Transformer\_channel\_tokens & 1.198469 & 0.5809 & 0.578026 & 0.5809 & 0.575370 & 485.951068 \\
+		\hline
+	\end{tabular}
+	\caption{Kết quả Phần 4 trên tập test}
+	\label{tab:part4_results}
+\end{table}
+
+\subsection{Biểu đồ và trực quan hóa}
+\begin{figure}[H]
+	\centering
+	\IfFileExists{images/part4_token_param_comparison.png}{
+		\includegraphics[width=0.9\textwidth]{images/part4_token_param_comparison.png}
+	}{
+		\fbox{\parbox{0.88\textwidth}{
+		Placeholder: biểu đồ so sánh số token và số tham số của Phần 4\newline
+		(xuất từ cell \texttt{part4\_repr\_df} trong notebook).}}
+	}
+	\caption{So sánh số token và số tham số giữa các kiến trúc Phần 4}
+	\label{fig:part4_token_param}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\IfFileExists{images/part4_tokenization_examples.png}{
+		\includegraphics[width=0.9\textwidth]{images/part4_tokenization_examples.png}
+	}{
+		\fbox{\parbox{0.88\textwidth}{
+		Placeholder: minh họa tokenization (patch 8x8, overlap patch 4x4 stride 2, channel-token)\newline
+		xuất trực tiếp từ notebook.}}
+	}
+	\caption{Minh họa các cách biểu diễn token trong Phần 4}
+	\label{fig:part4_tokenization}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\IfFileExists{images/part4_histories.png}{
+		\includegraphics[width=0.9\textwidth]{images/part4_histories.png}
+	}{
+		\fbox{\parbox{0.88\textwidth}{
+		Placeholder: training history của 4 mô hình Phần 4 (hàm \texttt{plot\_histories}).}}
+	}
+	\caption{Training history cho các mô hình Phần 4}
+	\label{fig:part4_histories}
+\end{figure}
+
+\subsection{So sánh và nhận xét}
+Từ Bảng~\ref{tab:part4_results}, \textbf{Hybrid\_CNN\_Transformer} đạt kết quả tốt nhất (Accuracy \(=0.7581\), F1 \(=0.757941\)). Kết quả này cho thấy việc kết hợp CNN backbone với Transformer giúp cân bằng tốt giữa đặc trưng cục bộ và quan hệ toàn cục.
+
+\textbf{ViT\_overlap\_patch} đạt chất lượng cao hơn hai biến thể còn lại nhưng có thời gian huấn luyện lớn nhất do số token cao nhất (225), phù hợp với xu hướng \(\mathrm{Cost}_{attn}\propto N^2\).
+
+\textbf{ViT\_patch8\_nonoverlap} và \textbf{Transformer\_channel\_tokens} có chi phí thấp hơn, nhưng hiệu năng giảm do mức độ nén thông tin biểu diễn cao hơn.
+
+Nhìn chung, phần 4 cho thấy trade-off rõ ràng giữa chất lượng dự đoán và chi phí tính toán khi thay đổi chiến lược tokenization.
+
+\subsection{Kết luận}
+Các kiến trúc mở rộng theo mục 3.4 đã được triển khai và đánh giá đầy đủ. Trong thiết lập thực nghiệm hiện tại, mô hình lai CNN--Transformer là lựa chọn hiệu quả nhất; các biến thể tokenization còn lại hữu ích để phân tích độ nhạy của Transformer theo số token và cách biểu diễn ảnh.
