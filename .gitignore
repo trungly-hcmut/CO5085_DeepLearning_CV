@@ -1,5 +1,16 @@
 exercise/data/
 
+# OS files
+.DS_Store
+
+# IDE settings
+.idea/
+.vscode/*
+!.vscode/settings.json
+
+# Local datasets
+data/
+
 # LaTeX build artifacts
 *.aux
 *.bbl

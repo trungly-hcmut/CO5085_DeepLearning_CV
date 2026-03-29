@@ -1,0 +1,67 @@
+{
+  "latex-workshop.latex.autoBuild.run": "onSave",
+  "latex-workshop.bind.altKeymap.enabled": false,
+  "latex-workshop.latex.rootFile.useSubFile": true,
+  "latex-workshop.latex.rootFile.doNotPrompt": true,
+  "latex-workshop.latex.recipe.default": "first",
+  "latex-workshop.latex.autoBuild.cleanAndRetry.enabled": false,
+  "latex-workshop.latex.env": {
+    "PATH": "/Library/TeX/texbin:${env:PATH}"
+  },
+  "latex-workshop.latex.autoClean.run": "never",
+  "latex-workshop.latex.clean.command": "/Library/TeX/texbin/latexmk",
+  "latex-workshop.message.error.show": false,
+  "latex-workshop.view.pdf.viewer": "tab",
+  "latex-workshop.synctex.afterBuild.enabled": true,
+  "latex-workshop.latex.outDir": "%DIR%/out",
+  "latex-workshop.latex.tools": [
+    {
+      "name": "latexmk-clean",
+      "command": "/bin/zsh",
+      "args": [
+        "-lc",
+        "cd \"%DIR%\" && /Library/TeX/texbin/latexmk -C -outdir=out \"%DOCFILE_EXT%\""
+      ]
+    },
+    {
+      "name": "latexmk",
+      "command": "/bin/zsh",
+      "args": [
+        "-lc",
+        "cd \"%DIR%\" && /Library/TeX/texbin/latexmk -g -synctex=1 -interaction=nonstopmode -file-line-error -pdf -outdir=out \"%DOCFILE_EXT%\""
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "latexmk (clean + pdf)",
+      "tools": [
+        "latexmk-clean",
+        "latexmk"
+      ]
+    }
+  ],
+  "latex-workshop.latex.clean.fileTypes": [
+    "*.aux",
+    "*.bbl",
+    "*.blg",
+    "*.idx",
+    "*.ind",
+    "*.lof",
+    "*.lot",
+    "*.out",
+    "*.toc",
+    "*.acn",
+    "*.acr",
+    "*.alg",
+    "*.glg",
+    "*.glo",
+    "*.gls",
+    "*.fls",
+    "*.fdb_latexmk",
+    "*.synctex.gz"
+  ],
+  "code-runner.executorMap": {},
+  "code-runner.fileDirectoryAsCwd": true,
+  "code-runner.showRunIconInEditorTitleMenu": false
+}
