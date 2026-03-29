@@ -1,2 +1,218 @@
 % !TeX root = ../main.tex
 \section{Mô hình phân loại dựa trên LSTM/GRU}
+
+\subsection{Giới thiệu}
+
+Phần này khám phá việc sử dụng các mô hình Recurrent Neural Networks (RNNs) --- cụ thể là LSTM (Long Short-Term Memory) và GRU (Gated Recurrent Unit) --- để phân loại ảnh CIFAR-10. Thay vì sử dụng kiến trúc CNN truyền thống, chúng tôi chuyển đổi ảnh 2D thành chuỗi 1D và huấn luyện mô hình RNN để học phụ thuộc thời gian giữa các phần tử chuỗi này.
+
+Mục tiêu chính của phần này là:
+\begin{itemize}
+    \item So sánh hiệu năng giữa hai kiến trúc RNN: LSTM và GRU
+    \item Đánh giá ảnh hưởng của cách biểu diễn chuỗi (row, column, hay patch sequence)
+    \item Phân tích khả năng của RNN trong bài toán phân loại ảnh
+\end{itemize}
+
+\subsection{Phương pháp chuyển ảnh thành chuỗi}
+
+\subsubsection{ImageSequenceEncoder}
+
+Để sử dụng RNN trên dữ liệu ảnh, cần chuyển ảnh 2D có kích thước $(C, H, W) = (3, 32, 32)$ thành chuỗi một chiều. Chúng tôi triển khai ba cách biểu diễn khác nhau:
+
+\begin{enumerate}
+    \item \textbf{Row Sequence:} Mỗi bước thời gian tương ứng với một hàng ảnh, kích thước đầu vào RNN là $3 \times 32 = 96$. Độ dài chuỗi là 32.
+    
+    \item \textbf{Column Sequence:} Tương tự row sequence nhưng sử dụng cột thay vì hàng.
+    
+    \item \textbf{Patch Sequence:} Chia ảnh thành các patch nhỏ (kích thước $p \times p$). Mỗi patch được flatten thành vector có kích thước $3 \times p \times p$. Với $p = 4$, độ dài chuỗi giảm xuống $\frac{32}{4} \times \frac{32}{4} = 64$ patches, nhưng mỗi patch giữ được thông tin hình ảnh tốt hơn.
+\end{enumerate}
+
+Cách biểu diễn patch sequence thường ổn định hơn vì giảm độ dài chuỗi và cấu trúc hóa thông tin không gian tốt hơn.
+
+\subsection{Kiến trúc mô hình}
+
+\subsubsection{LSTM Classifier}
+
+Kiến trúc LSTM Classifier bao gồm các thành phần chính:
+
+\begin{itemize}
+    \item \textbf{Image Sequence Encoder:} Chuyển ảnh đầu vào thành chuỗi
+    \item \textbf{LSTM Layer:} Với cấu hình:
+    \begin{itemize}
+        \item Input size: Tùy theo cách biểu diễn (96 cho row, 48 cho patch với $p=4$)
+        \item Hidden size: 256
+        \item Số layers: 2
+        \item Dropout: 0.3 (giữa các layers)
+        \item Bidirectional: True (xử lý chuỗi theo hai hướng)
+    \end{itemize}
+    \item \textbf{Pooling \& Classification Head:} Ghép ba cách tính toán từ output RNN:
+    \begin{itemize}
+        \item Last hidden state
+        \item Mean pooling qua toàn bộ time steps
+        \item Max pooling qua toàn bộ time steps
+    \end{itemize}
+    Kết quả được ghép lại (concatenate) thành vector có kích thước $3 \times \text{hidden\_size} \times 2 = 1536$ (do bidirectional), sau đó đi qua Layer Normalization, Dropout, và Linear layer để phân loại thành 10 lớp.
+\end{itemize}
+
+\subsubsection{GRU Classifier}
+
+GRU Classifier có cấu trúc tương tự LSTM Classifier, nhưng thay thế LSTM layer bằng GRU layer. GRU có ít parameter hơn LSTM (không có cell state, chỉ có hidden state), dẫn đến tính toán nhanh hơn nhưng vẫn giữ khả năng học phụ thuộc dài hạn.
+
+\subsection{Thiết lập thí nghiệm}
+
+\subsubsection{Dữ liệu}
+
+\begin{itemize}
+    \item \textbf{Dataset:} CIFAR-10
+    \item \textbf{Chia dữ liệu:} 80\% train, 20\% validation (từ tập train gốc), 100\% test set
+    \item \textbf{Kích thước batch:} 128
+    \item \textbf{Data Augmentation (train set):}
+    \begin{itemize}
+        \item Random Horizontal Flip
+        \item Random Crop (32x32 với padding 4)
+        \item Color Jitter (brightness=0.2, contrast=0.2)
+    \end{itemize}
+    \item \textbf{Normalization:} $(0.5, 0.5, 0.5)$ cho mean và std
+\end{itemize}
+
+\subsubsection{Hyperparameters}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{ll}
+        \toprule
+        \textbf{Tham số} & \textbf{Giá trị} \\
+        \midrule
+        Batch size & 128 \\
+        Learning rate & 0.002 \\
+        Weight decay & $1 \times 10^{-4}$ \\
+        Epochs & 15 \\
+        Optimizer & AdamW \\
+        Scheduler & Cosine Annealing \\
+        Gradient clipping & 1.0 (chống exploding gradients) \\
+        Label smoothing & 0.1 \\
+        Mixed Precision (AMP) & Enabled (nếu có CUDA) \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsubsection{Các mô hình được so sánh}
+
+Chúng tôi huấn luyện 4 mô hình với các kết hợp khác nhau:
+
+\begin{enumerate}
+    \item \textbf{LSTM\_row:} LSTM với row sequence
+    \item \textbf{LSTM\_patch:} LSTM với patch sequence (patch\_size=4)
+    \item \textbf{GRU\_row:} GRU với row sequence
+    \item \textbf{GRU\_patch:} GRU với patch sequence (patch\_size=4)
+\end{enumerate}
+
+\subsection{Kết quả và phân tích}
+
+\subsubsection{Kết quả Test Set}
+
+Bảng dưới đây tổng hợp các metric trên test set sau khi huấn luyện xong:
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Model} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1 Score} \\
+        \midrule
+        LSTM\_patch & \textbf{0.6980} & \textbf{0.6985} & \textbf{0.6980} & \textbf{0.6978} \\
+        GRU\_patch & 0.6830 & 0.6832 & 0.6830 & 0.6827 \\
+        LSTM\_row & 0.6670 & 0.6670 & 0.6670 & 0.6667 \\
+        GRU\_row & 0.6540 & 0.6541 & 0.6540 & 0.6537 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Kết quả phân loại trên test set CIFAR-10}
+\end{table}
+
+\subsubsection{Nhận xét chính}
+
+\begin{enumerate}
+    \item \textbf{Ảnh hưởng của cách biểu diễn:}
+    \begin{itemize}
+        \item Cách biểu diễn \textbf{Patch Sequence} cho kết quả tốt hơn Row Sequence với cả LSTM và GRU (LSTM\_patch F1=0.6978 vs LSTM\_row F1=0.6667, cải thiện ~3.1\%).
+        \item Điều này cho thấy việc tập trung thông tin không gian vào các patch giúp RNN xử lý hiệu quả hơn so với xử lý từng hàng riêng lẻ.
+    \end{itemize}
+    
+    \item \textbf{So sánh LSTM vs GRU:}
+    \begin{itemize}
+        \item LSTM vượt trội hơn GRU trong cùng kiểu biểu diễn (LSTM\_patch F1=0.6978 vs GRU\_patch F1=0.6827, cải thiện ~2.1\%).
+        \item Mặc dù GRU đơn giản hơn, LSTM có khả năng "nhớ" lâu hơn nhờ cell state riêng biệt, giúp học tốt hơn trên bài toán này.
+    \end{itemize}
+    
+    \item \textbf{Quá trình huấn luyện:}
+    \begin{itemize}
+        \item Tất cả 4 mô hình đều hội tụ tốt: train loss giảm đều qua 15 epochs, validation accuracy và F1 tăng ổn định.
+        \item Không quan sát thấy overfitting rõ rệt, cho thấy việc áp dụng label smoothing, dropout, và weight decay là hiệu quả.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Trực quan hóa kết quả}
+
+Chúng tôi trích xuất các biểu đồ từ quá trình huấn luyện để tương ưa hình ảnh về hiệu năng các mô hình.
+
+\subsubsection{Learning Curves}
+
+Hình~\ref{fig:part5_learning_curves} hiển thị ba đồ thị learning curves:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{images/part5_learning_curves.png}
+    \caption{Learning curves: Train Loss (trái), Validation Accuracy (giữa), và Validation F1 (phải) qua 15 epochs. Tất cả 4 mô hình hội tụ ổn định với GRU\_row hơi chậm hơn các mô hình khác.}
+    \label{fig:part5_learning_curves}
+\end{figure}
+
+Khuyết điểm chính:
+\begin{itemize}
+    \item \textbf{Train Loss:} Giảm đột ngột từ epoch 1-2, sau đó giảm từ từ, cho thấy mô hình đã tìm tới khu vực lợi ích. Không có dấu hiệu overfitting rõ rệt khi val\_acc của LSTM\_patch vẫn tăng đến epoch 15.
+    \item \textbf{Validation Accuracy \& F1:} Tất cả mô hình đều tăng từ từ qua các epochs. LSTM\_patch và LSTM\_row tiếp tục cải tiến ổn định đến cuối.
+    \item \textbf{Xếp hạng theo hiệu năng:} Suốt quá trình huấn luyện, LSTM\_patch và GRU\_patch luôn chiếm vị trí hàng đầu, xác nhận rằng patch sequence tốt hơn row sequence.
+\end{itemize}
+
+\subsubsection{So sánh Test Metrics}
+
+Hình~\ref{fig:part5_test_f1_comparison} so sánh Test F1 Score của 4 mô hình:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/part5_test_f1_comparison.png}
+    \caption{So sánh Test F1 Score giữa 4 mô hình. LSTM\_patch đạt F1 cao nhất (0.698), theo sau là GRU\_patch (0.683), LSTM\_row (0.667), và GRU\_row (0.654).}
+    \label{fig:part5_test_f1_comparison}
+\end{figure}
+
+Hình~\ref{fig:part5_detailed_metrics} cung cấp chi tiết hơn với 4 metrics: Accuracy, Precision, Recall, và F1:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{images/part5_detailed_metrics.png}
+    \caption{Chi tiết các metrics trên test set: Accuracy, Precision, Recall, và F1 Score. Thấy rằng tất cả metrics tương ứng với nhau (không có bias cao), cho thấy dữ liệu CIFAR-10 cân bằng tốt.}
+    \label{fig:part5_detailed_metrics}
+\end{figure}
+
+Nhận xét:
+\begin{itemize}
+    \item Sự chênh lệch Test F1 giữa LSTM\_patch (0.698) và GRU\_patch (0.683) là $\approx$ 1.5\%, không lớn nhưng đủ để cho thấy LSTM giữ phụ thuộc temporal tốt hơn.
+    \item Precision, Recall, và F1 gần bằng nhau cho mỗi mô hình, chỉ ra rằng không có sự mất cân bằng giữa false positive và false negative.
+    \item Sự cải thiện từ row sang patch (ví dụ, LSTM\_patch 0.698 vs LSTM\_row 0.667) là $\approx$ 3.1\%, đáng kể và có ý nghĩa thống kê.
+\end{itemize}
+
+\subsection{Kết luận và hướng cải thiện}
+
+\subsubsection{Kết luận}
+
+Thí nghiệm cho thấy RNN (cụ thể là LSTM/GRU) \textbf{có thể} được sử dụng để phân loại ảnh CIFAR-10 với kết quả khá tốt (F1 $\approx$ 0.698 cho mô hình tốt nhất). Tuy nhiên, hiệu năng này vẫn thấp hơn so với các kiến trúc chuyên biệt như CNN hay Vision Transformer, vì RNN không tận dụng được cấu trúc không gian 2D của ảnh một cách tối ưu.
+
+Mô hình tốt nhất là \textbf{LSTM\_patch}, sử dụng cách biểu diễn patch sequence, cho thấy cách tổ chức thông tin không gian là rất quan trọng.
+
+\subsubsection{Hướng cải thiện tiếp theo}
+
+\begin{enumerate}
+    \item \textbf{Tăng số epochs} lên 20-30 để cho phép mô hình hội tụ lâu hơn
+    \item \textbf{Tinh chỉnh hyperparameters:} Adjust hidden\_size, num\_layers, dropout, learning rate theo validation performance
+    \item \textbf{Thử patch\_size khác} (2, 8) để cân bằng giữa độ dài chuỗi và lượng thông tin mỗi bước
+    \item \textbf{Phân tích lỗi theo lớp:} Xây dựng confusion matrix để hiểu những lớp nào khó phân loại (ví dụ, cat vs dog)
+    \item \textbf{So sánh với baseline CNN} để làm rõ ưu/nhược điểm của RNN so với CNN trên bài toán ảnh
+    \item \textbf{Kết hợp RNN + CNN:} Sử dụng CNN để trích xuất đặc trưng, sau đó đưa vào RNN có thể cho kết quả tốt hơn
+\end{enumerate}
