@@ -1,1 +1,186 @@
 \section{Xây dụng các mô hình phân loại}
+
+Trong phần này, chúng tôi xây dựng và triển khai bốn mô hình phân loại ảnh bao gồm: Softmax Regression, MLP, CNN và Vision Transformer (ViT). Các mô hình được thiết kế với độ phức tạp tăng dần nhằm đánh giá khả năng học đặc trưng trên tập dữ liệu CIFAR-10.
+
+\subsubsection{Giới thiệu}
+
+Softmax Regression (hay Multinomial Logistic Regression) là một mô hình phân loại tuyến tính được sử dụng cho các bài toán phân loại đa lớp. Mô hình này dự đoán xác suất một mẫu đầu vào thuộc về từng lớp thông qua một phép biến đổi tuyến tính, sau đó lựa chọn lớp có xác suất cao nhất làm kết quả dự đoán.
+
+Do có cấu trúc đơn giản và dễ huấn luyện, Softmax Regression thường được sử dụng làm baseline để so sánh với các mô hình phức tạp hơn.
+
+\subsubsection{Xây dựng kiến trúc}
+
+Dựa trên kiến trúc đã cài đặt, chúng tôi xây dựng mô hình Softmax Regression bằng cách sử dụng một lớp tuyến tính duy nhất để thực hiện phân loại.
+
+Cụ thể, mỗi ảnh đầu vào kích thước $32 \times 32 \times 3$ được làm phẳng thành vector một chiều $x \in \mathbb{R}^{3072}$ thông qua phép reshape trong hàm \texttt{forward}. Vector này sau đó được đưa trực tiếp vào một lớp fully-connected để ánh xạ từ không gian đặc trưng sang không gian nhãn gồm 10 lớp.
+
+Mô hình không sử dụng các lớp ẩn hay hàm kích hoạt phi tuyến, do đó toàn bộ quá trình học chỉ dựa trên một phép biến đổi tuyến tính. Trong quá trình huấn luyện, hàm Softmax được tích hợp trong hàm mất mát (cross-entropy loss) để tính xác suất và tối ưu mô hình.
+
+\begin{itemize}
+\item Input: ảnh $32 \times 32 \times 3$
+\item Flatten: $x \in \mathbb{R}^{3072}$
+\item Linear layer: $3072 \rightarrow 10$
+\item Softmax (thông qua hàm loss)
+\end{itemize}
+
+\subsubsection{Nhận xét}
+
+Mô hình Softmax Regression có ưu điểm là đơn giản, dễ cài đặt và chi phí tính toán thấp, phù hợp làm baseline cho bài toán phân loại CIFAR-10.
+
+Tuy nhiên, do chỉ sử dụng một phép biến đổi tuyến tính và làm phẳng ảnh đầu vào, mô hình không thể khai thác cấu trúc không gian cũng như các đặc trưng cục bộ của ảnh. Điều này khiến hiệu năng của mô hình bị hạn chế, đặc biệt trong các trường hợp dữ liệu có nhiều biến thể về vị trí, góc nhìn và nền như trong CIFAR-10.
+
+\subsection{Multi-Layer Perceptron (MLP)}
+
+\subsubsection{Giới thiệu}
+
+Multi-Layer Perceptron (MLP) là một kiến trúc mạng neural truyền thẳng (feedforward neural network) bao gồm nhiều lớp fully-connected. Khác với mô hình tuyến tính như Softmax Regression, MLP sử dụng các hàm kích hoạt phi tuyến để học các quan hệ phức tạp hơn trong dữ liệu.
+
+Nhờ khả năng mô hình hóa phi tuyến, MLP có thể học được các biểu diễn trừu tượng và thường đạt hiệu năng tốt hơn so với các mô hình tuyến tính trong các bài toán phân loại.
+
+\subsubsection{Xây dựng kiến trúc}
+
+Dựa trên kiến trúc đã cài đặt, chúng tôi xây dựng một mô hình MLP gồm nhiều lớp fully-connected để thực hiện phân loại ảnh trên tập CIFAR-10.
+
+Cụ thể, mỗi ảnh đầu vào kích thước $32 \times 32 \times 3$ được làm phẳng thành vector một chiều $x \in \mathbb{R}^{3072}$ thông qua phép reshape trong hàm \texttt{forward}. Vector này sau đó được đưa qua các lớp ẩn với kích thước giảm dần, kết hợp với hàm kích hoạt ReLU để học các đặc trưng phi tuyến.
+
+Lớp cuối cùng là một lớp tuyến tính ánh xạ đặc trưng sang không gian nhãn gồm 10 lớp. Tương tự như Softmax Regression, hàm Softmax được tích hợp trong hàm mất mát trong quá trình huấn luyện.
+
+\begin{itemize}
+\item Input: ảnh $32 \times 32 \times 3$
+\item Flatten: $x \in \mathbb{R}^{3072}$
+\item Hidden layer 1: $3072 \rightarrow 512$ + ReLU
+\item Hidden layer 2: $512 \rightarrow 256$ + ReLU
+\item Output layer: $256 \rightarrow 10$
+\item Softmax (thông qua hàm loss)
+\end{itemize}
+
+\subsubsection{Nhận xét}
+
+So với Softmax Regression, MLP có khả năng học các quan hệ phi tuyến trong dữ liệu, từ đó cải thiện hiệu năng phân loại. Việc sử dụng nhiều lớp ẩn với kích thước giảm dần giúp mô hình học được các biểu diễn đặc trưng ở nhiều mức độ khác nhau.
+
+Tuy nhiên, tương tự như mô hình tuyến tính, MLP vẫn sử dụng đầu vào dạng vector đã được làm phẳng, dẫn đến việc mất thông tin về cấu trúc không gian của ảnh. Điều này khiến mô hình gặp hạn chế trong việc khai thác các đặc trưng cục bộ quan trọng.
+
+Ngoài ra, số lượng tham số của các lớp fully-connected tương đối lớn, làm tăng nguy cơ overfitting và chi phí tính toán. Do đó, mặc dù MLP mạnh hơn Softmax Regression, nó vẫn chưa phải là lựa chọn tối ưu cho bài toán xử lý ảnh so với các kiến trúc như CNN.
+
+\subsection{Convolutional Neural Network (CNN)}
+
+\subsubsection{Giới thiệu}
+
+Convolutional Neural Network (CNN) là một kiến trúc mạng neural được thiết kế chuyên biệt cho dữ liệu hình ảnh. Khác với các mô hình như MLP, CNN giữ nguyên cấu trúc không gian của ảnh và sử dụng các phép tích chập để học các đặc trưng cục bộ như cạnh, góc và texture.
+
+Nhờ khả năng học đặc trưng phân cấp và tận dụng mối quan hệ không gian giữa các pixel, CNN thường đạt hiệu năng cao trong các bài toán phân loại ảnh.
+
+\subsubsection{Xây dựng kiến trúc}
+
+Đối với bài toán phân loại trên tập CIFAR-10, chúng tôi xây dựng một kiến trúc CNN gồm ba khối tích chập (convolutional blocks) để trích xuất đặc trưng từ ảnh đầu vào kích thước $32 \times 32 \times 3$.
+
+Mỗi khối bao gồm các lớp convolution với kernel kích thước $3 \times 3$, kết hợp với Batch Normalization và hàm kích hoạt ReLU nhằm tăng khả năng học và ổn định quá trình huấn luyện. Sau mỗi khối, lớp MaxPooling được sử dụng để giảm kích thước không gian của feature map.
+
+Cụ thể, kiến trúc được thiết kế như sau:
+
+\begin{itemize}
+\item Input: ảnh $32 \times 32 \times 3$
+
+\item \textbf{Block 1:}
+\begin{itemize}
+\item Conv ($3 \rightarrow 64$), kernel $3 \times 3$
+\item Conv ($64 \rightarrow 64$), kernel $3 \times 3$
+\item MaxPooling ($32 \rightarrow 16$)
+\end{itemize}
+
+\item \textbf{Block 2:}
+\begin{itemize}
+\item Conv ($64 \rightarrow 128$)
+\item Conv ($128 \rightarrow 128$)
+\item MaxPooling ($16 \rightarrow 8$)
+\end{itemize}
+
+\item \textbf{Block 3:}
+\begin{itemize}
+\item Conv ($128 \rightarrow 256$)
+\item MaxPooling ($8 \rightarrow 4$)
+\end{itemize}
+
+\item Flatten: $256 \times 4 \times 4$
+
+\item Fully-connected layers:
+\begin{itemize}
+\item Linear: $4096 \rightarrow 512$
+\item ReLU
+\item Linear: $512 \rightarrow 10$
+\end{itemize}
+
+\item Dropout ($p = 0.5$) được sử dụng để giảm overfitting
+\item Softmax được áp dụng ở đầu ra để thu được xác suất phân lớp
+\end{itemize}
+
+\subsubsection{Nhận xét}
+
+Kiến trúc CNN này cho phép mô hình học các đặc trưng hình ảnh theo cấp bậc, từ các đặc trưng đơn giản như cạnh ở các lớp đầu, đến các đặc trưng phức tạp hơn ở các lớp sâu hơn. Điều này đặc biệt phù hợp với tập dữ liệu CIFAR-10, nơi các đối tượng có sự biến đổi lớn về góc nhìn, vị trí và nền.
+
+Việc sử dụng Batch Normalization giúp ổn định quá trình huấn luyện và tăng tốc hội tụ, trong khi Dropout được áp dụng ở các lớp fully-connected nhằm giảm nguy cơ overfitting.
+
+Ngoài ra, cơ chế pooling giúp giảm kích thước feature map và tăng tính bất biến đối với dịch chuyển (translation invariance), từ đó cải thiện khả năng tổng quát hóa của mô hình.
+
+Tuy nhiên, mặc dù CNN có khả năng khai thác đặc trưng cục bộ hiệu quả, mô hình vẫn có thể gặp hạn chế trong việc nắm bắt các mối quan hệ toàn cục trong ảnh, đặc biệt khi đối tượng và ngữ cảnh phân bố phức tạp.
+
+\subsection{Vision Transformer (ViT)}
+
+\subsubsection{Giới thiệu}
+
+Vision Transformer (ViT) là một kiến trúc học sâu áp dụng cơ chế self-attention của Transformer cho bài toán xử lý ảnh. Thay vì sử dụng các phép tích chập như trong CNN, ViT chia ảnh thành các vùng nhỏ (patches) và xử lý chúng như các token trong bài toán xử lý ngôn ngữ tự nhiên.
+
+Thông qua cơ chế self-attention, mô hình có khả năng học được mối quan hệ toàn cục giữa các vùng khác nhau của ảnh, thay vì chỉ tập trung vào các đặc trưng cục bộ. Điều này giúp ViT có tiềm năng biểu diễn mạnh hơn, đặc biệt khi có đủ dữ liệu huấn luyện.
+
+\subsubsection{Xây dựng kiến trúc}
+
+Dựa trên kiến trúc đã cài đặt, chúng tôi xây dựng mô hình Vision Transformer cho bài toán phân loại CIFAR-10 với các thành phần chính như sau:
+
+\paragraph{Patch Embedding}
+
+Ảnh đầu vào kích thước $32 \times 32 \times 3$ được chia thành các patch kích thước $4 \times 4$. Thay vì tách patch thủ công, chúng tôi sử dụng một lớp tích chập với kernel size và stride bằng patch size để thực hiện việc này.
+
+Cụ thể, lớp \texttt{Conv2d} ánh xạ từ 3 kênh đầu vào sang không gian đặc trưng có chiều $dim = 128$, đồng thời giảm kích thước không gian. Kết quả thu được tensor có dạng $(B, dim, H, W)$, sau đó được reshape thành chuỗi các vector patch $(B, N, dim)$.
+
+\paragraph{Token hóa và Positional Embedding}
+
+Một vector đặc biệt (CLS token) được thêm vào đầu chuỗi patch nhằm tổng hợp thông tin toàn cục cho bài toán phân loại. Đồng thời, embedding vị trí (positional embedding) được cộng vào để giữ thông tin về thứ tự không gian của các patch.
+
+\begin{itemize}
+\item Số patch: $N = (32 / 4)^2 = 64$
+\item Kích thước mỗi token: $dim = 128$
+\item Chuỗi đầu vào Transformer: $65$ token (64 patch + 1 CLS)
+\end{itemize}
+
+\paragraph{Transformer Encoder}
+
+Chuỗi token được đưa qua một Transformer Encoder gồm $6$ lớp, mỗi lớp bao gồm:
+\begin{itemize}
+\item Multi-head self-attention với $8$ heads
+\item Feed-forward network với kích thước ẩn $256$
+\item Dropout để giảm overfitting
+\end{itemize}
+
+Cơ chế self-attention cho phép mỗi patch tương tác với tất cả các patch khác, giúp mô hình học được quan hệ toàn cục trong ảnh.
+
+\paragraph{Phân loại}
+
+Sau khi qua Transformer, vector tương ứng với CLS token được trích xuất và đưa qua một lớp chuẩn hóa (LayerNorm) và một lớp tuyến tính để dự đoán nhãn.
+
+\begin{itemize}
+\item Input: ảnh $32 \times 32 \times 3$
+\item Patch embedding: $4 \times 4$ patches $\rightarrow N = 64$
+\item Token dimension: $128$
+\item Transformer: $6$ layers, $8$ heads
+\item Output: sử dụng CLS token $\rightarrow 10$ lớp
+\end{itemize}
+
+\subsubsection{Nhận xét}
+
+Vision Transformer có khả năng mô hình hóa quan hệ toàn cục giữa các vùng trong ảnh thông qua cơ chế self-attention, điều mà các mô hình như MLP hay CNN khó thực hiện trực tiếp.
+
+Tuy nhiên, ViT không có inductive bias mạnh về cấu trúc không gian như CNN (ví dụ: locality hay translation invariance), do đó thường yêu cầu lượng dữ liệu lớn để huấn luyện hiệu quả. Với các tập dữ liệu nhỏ như CIFAR-10, mô hình có thể gặp khó khăn trong việc tổng quát hóa nếu không được regularization hoặc tinh chỉnh phù hợp.
+
+Ngoài ra, chi phí tính toán của self-attention tăng theo bình phương số lượng patch, dẫn đến độ phức tạp cao hơn so với CNN trong nhiều trường hợp.
+
+Tóm lại, ViT là một hướng tiếp cận mạnh mẽ cho bài toán thị giác, nhưng hiệu quả của nó phụ thuộc đáng kể vào quy mô dữ liệu và cách thiết kế mô hình.

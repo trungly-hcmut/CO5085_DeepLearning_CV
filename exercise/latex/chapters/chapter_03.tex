@@ -1,1 +1,194 @@
-\section{Huấn luyện, đánh giá và so sánh}
+\section{Huấn luyện, đánh giá và so sánh các mô hình}
+
+\subsection{Mục tiêu}
+Mục tiêu của phần này là đánh giá hiệu năng của bốn mô hình: \textbf{Softmax, MLP, CNN, ViT} trên tập CIFAR-10. 
+Các chỉ số đánh giá chính bao gồm: 
+\textbf{Accuracy, F1-score}, cùng \textbf{Confusion Matrix} để phân tích chi tiết.
+
+\subsection{Thiết lập huấn luyện}
+
+\subsubsection{Cấu hình dữ liệu}
+\begin{itemize}
+    \item Dataset: CIFAR-10 (50k train + 10k test)
+    \item Chia tập train thành train (80\%) và validation (20\%)
+    \item Data augmentation cho tập train:
+    \begin{itemize}
+        \item Random horizontal flip
+        \item Color jitter (brightness, contrast)
+        \item Normalization
+    \end{itemize}
+    \item Chuẩn hóa cho tập validation và test
+\end{itemize}
+
+\subsubsection{DataLoader}
+\begin{itemize}
+    \item Batch size: 128
+    \item Shuffle: True cho train, False cho validation/test
+\end{itemize}
+
+\subsection{Mô hình và cấu hình huấn luyện}
+
+\subsubsection{Các mô hình}
+\begin{itemize}
+    \item Softmax Regression
+    \item MLP (Multi-Layer Perceptron)
+    \item CNN (Convolutional Neural Network)
+    \item ViT (Vision Transformer)
+\end{itemize}
+
+\subsubsection{Cấu hình huấn luyện}
+\begin{itemize}
+    \item Loss function: CrossEntropyLoss
+    \item Optimizer: Adam, learning rate = 1e-3, weight\_decay = 1e-4
+    \item Epochs: 20
+    \item Device: GPU (T4)
+    \item Lưu mô hình tốt nhất dựa trên F1-score trên validation set
+\end{itemize}
+
+\subsection{Lịch sử huấn luyện}
+
+\begin{figure}[H]
+    \centering
+    
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/plot_training_history_softmax.png}
+        \caption{Softmax}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/plot_training_history_mlp.png}
+        \caption{MLP}
+    \end{subfigure}
+
+    \vspace{0.5cm}
+
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/plot_training_history_cnn.png}
+        \caption{CNN}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/plot_training_history_vit.png}
+        \caption{ViT}
+    \end{subfigure}
+
+    \caption{So sánh training history của các mô hình (Loss, Accuracy, F1)}
+    \label{fig:training_history_models}
+\end{figure}
+
+Nhìn vào Hình~\ref{fig:training_history_models}, có thể thấy sự khác biệt rõ rệt về quá trình học của các mô hình.
+
+Đối với \textbf{Softmax}, giá trị loss giảm rất chậm và gần như dừng sớm, trong khi accuracy và F1-score dao động mạnh qua các epoch. Điều này cho thấy mô hình học chưa tốt và không ổn định, có dấu hiệu underfitting.
+
+Mô hình \textbf{MLP} cho thấy sự cải thiện rõ rệt hơn. Loss giảm đều theo thời gian, trong khi accuracy và F1-score tăng dần và ổn định hơn so với Softmax. Tuy nhiên, mức hiệu năng cuối cùng vẫn còn khá hạn chế, cho thấy khả năng biểu diễn của MLP chưa đủ mạnh với bài toán.
+
+Đối với \textbf{CNN}, đây là mô hình có hiệu năng tốt nhất trong các mô hình thử nghiệm. Loss giảm nhanh và liên tục, trong khi accuracy và F1-score tăng mạnh và đạt giá trị cao nhất. Các đường cong cũng mượt và ổn định, chứng tỏ quá trình học hiệu quả và hội tụ tốt.
+
+Mô hình \textbf{ViT} cũng cho thấy xu hướng học tốt với loss giảm và các metric tăng đều. Tuy nhiên, tốc độ hội tụ chậm hơn CNN và hiệu năng cuối cùng thấp hơn một chút. Điều này có thể do ViT thường yêu cầu nhiều dữ liệu hơn để phát huy hiệu quả.
+
+Tổng thể, trên tập huấn luyện và validation, CNN thể hiện hiệu năng tốt hơn so với Softmax và MLP, trong khi ViT đạt kết quả khá, nhưng chưa vượt trội hơn CNN trong thiết lập hiện tại. Tuy nhiên, để đánh giá chính xác khả năng tổng quát hóa, cần kiểm tra hiệu năng trên tập test.
+
+\subsection{So sánh hiệu năng các mô hình}
+
+\subsubsection{Kết quả đánh giá các mô hình}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lcccc}
+        \hline
+        \textbf{Model} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-score} \\
+        \hline
+        Softmax & 0.3891 & 0.3874 & 0.3891 & 0.3845 \\
+        MLP     & 0.5513 & 0.5529 & 0.5513 & 0.5502 \\
+        CNN     & \textbf{0.8486} & 0.8509 & 0.8486 & \textbf{0.8472} \\
+        ViT     & 0.6780 & 0.6802 & 0.6780 & 0.6763 \\
+        \hline
+    \end{tabular}
+    \caption{Kết quả đánh giá các mô hình trên tập test}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.45\textwidth]{images/accuracy_f1_comparison.png}
+    \caption{Đồ thị so sánh Accuracy \& F1-score}
+\end{figure}
+
+\textbf{Nhận xét}
+
+Kết quả đánh giá trên tập test cho thấy bốn mô hình (Softmax, MLP, CNN và ViT) có sự khác biệt rõ rệt về khả năng học biểu diễn đặc trưng và phân loại trên tập dữ liệu CIFAR-10.
+
+\textbf{Mô hình CNN} đạt kết quả tốt nhất với Accuracy 0.8486 và F1-score 0.8472, cho thấy khả năng khai thác đặc trưng không gian của ảnh hiệu quả. Điều này phù hợp với bản chất của CNN khi được thiết kế chuyên biệt cho dữ liệu ảnh.
+
+\textbf{Mô hình ViT} mặc dù là kiến trúc hiện đại nhưng chỉ đạt Accuracy 0.6780, thấp hơn đáng kể so với CNN. Nguyên nhân có thể do ViT thường yêu cầu lượng dữ liệu lớn và chiến lược huấn luyện phức tạp hơn để phát huy tối đa hiệu quả, trong khi CIFAR-10 là tập dữ liệu tương đối nhỏ.
+
+Trong khi đó, \textbf{MLP} đạt mức hiệu năng trung bình (Accuracy 0.5513), cho thấy mô hình có thể học được một số đặc trưng nhưng bị hạn chế do không tận dụng được cấu trúc không gian của ảnh.
+
+\textbf{Mô hình Softmax} (tuyến tính) cho kết quả thấp nhất (Accuracy 0.3891), phản ánh việc mô hình này không đủ khả năng biểu diễn các quan hệ phi tuyến phức tạp trong dữ liệu ảnh.
+
+Tổng thể, kết quả thực nghiệm khẳng định CNN là lựa chọn phù hợp nhất trong bối cảnh bài toán phân loại ảnh trên CIFAR-10 với quy mô dữ liệu và cách huấn luyện hiện tại.
+
+\subsubsection{Ma trận nhầm lẫn}
+
+\begin{figure}[H]
+    \centering
+    
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/confusion_matrix_softmax.png}
+        \caption{Softmax}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/confusion_matrix_mlp.png}
+        \caption{MLP}
+    \end{subfigure}
+
+    \vspace{0.5cm}
+
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/confusion_matrix_cnn.png}
+        \caption{CNN}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{images/confusion_matrix_vit.png}
+        \caption{ViT}
+    \end{subfigure}
+    \caption{So sánh confusion matrix của các mô hình trên tập test}
+    \label{fig:conf_matrix}
+\end{figure}
+
+Từ các ma trận nhầm lẫn trong Hình~\ref{fig:conf_matrix}, có thể quan sát rõ sự khác biệt về khả năng phân loại giữa bốn mô hình.
+
+Đối với \textbf{Softmax}, các giá trị trên đường chéo chính tương đối thấp và phân bố lỗi khá rải rác giữa nhiều lớp. Mô hình thường nhầm lẫn giữa các nhóm có đặc trưng tương đồng như cat–dog, deer–horse hoặc automobile–truck. Điều này cho thấy mô hình tuyến tính không đủ khả năng học các đặc trưng phân biệt phức tạp của dữ liệu ảnh CIFAR-10.
+
+\textbf{Mô hình MLP} đã cải thiện đáng kể so với Softmax khi các giá trị trên đường chéo tăng lên rõ rệt. Tuy nhiên, vẫn tồn tại nhiều nhầm lẫn đáng kể giữa các lớp có hình dạng hoặc ngữ nghĩa gần nhau, đặc biệt là nhóm động vật (cat, dog, deer, horse) và nhóm phương tiện (automobile, truck). Điều này phản ánh hạn chế của MLP khi không tận dụng được cấu trúc không gian của ảnh.
+
+\textbf{Đối với CNN}, ma trận nhầm lẫn thể hiện sự tập trung cao trên đường chéo chính, cho thấy khả năng phân loại chính xác vượt trội. Số lượng dự đoán đúng ở hầu hết các lớp đều rất cao, đặc biệt là các lớp như airplane, automobile, ship, truck. Các lỗi còn lại chủ yếu xuất hiện ở những cặp lớp có đặc trưng trực quan tương đối giống nhau như cat–dog hoặc deer–horse, nhưng tần suất đã giảm đáng kể so với hai mô hình trước.
+
+\textbf{Mô hình ViT} cho kết quả tốt hơn MLP nhưng vẫn kém hơn CNN. Ma trận nhầm lẫn cho thấy mô hình vẫn gặp khó khăn trong việc phân biệt các lớp có chi tiết nhỏ và phức tạp, đặc biệt là nhóm động vật. Ngoài ra, một số nhầm lẫn giữa airplane và ship hoặc giữa các phương tiện vẫn còn xuất hiện. Điều này có thể do ViT chưa được huấn luyện với lượng dữ liệu đủ lớn để khai thác hiệu quả cơ chế attention.
+
+Tổng thể, các ma trận nhầm lẫn củng cố kết luận từ các chỉ số đánh giá: CNN là mô hình có khả năng phân biệt lớp tốt nhất, với lỗi phân loại thấp và tập trung chủ yếu ở các trường hợp khó; trong khi Softmax và MLP còn hạn chế trong việc học đặc trưng ảnh, và ViT ở mức trung gian nhưng chưa phát huy hết tiềm năng trong điều kiện thí nghiệm hiện tại.
+
+\subsection{Kết luận tổng thể}
+
+Qua quá trình huấn luyện, đánh giá và phân tích các mô hình trên tập CIFAR-10, có thể rút ra những kết luận chính sau:
+
+\begin{itemize}
+    \item \textbf{Softmax} là mô hình tuyến tính đơn giản, hiệu năng thấp nhất, gặp nhiều nhầm lẫn giữa các lớp tương đồng, chứng tỏ khả năng biểu diễn đặc trưng hạn chế.
+    
+    \item \textbf{MLP} cải thiện đáng kể so với Softmax nhờ khả năng học phi tuyến, nhưng vẫn chưa khai thác được cấu trúc không gian của ảnh, dẫn đến nhầm lẫn ở các nhóm lớp gần nhau.
+    
+    \item \textbf{CNN} thể hiện hiệu năng vượt trội nhất, với dự đoán chính xác tập trung trên đường chéo ma trận nhầm lẫn và các metric (Accuracy, F1-score) cao nhất. Điều này khẳng định CNN phù hợp để xử lý dữ liệu ảnh và khai thác hiệu quả đặc trưng không gian.
+    
+    \item \textbf{ViT} đạt hiệu năng trung gian: tốt hơn MLP nhưng chưa vượt qua CNN, có thể do yêu cầu dữ liệu lớn và chiến lược huấn luyện phức tạp để cơ chế attention phát huy tối đa hiệu quả.
+\end{itemize}
+
+Tổng thể, kết quả thực nghiệm cho thấy CNN là lựa chọn hiệu quả nhất trong bối cảnh bài toán phân loại ảnh CIFAR-10 với quy mô dữ liệu và thiết lập huấn luyện hiện tại.
