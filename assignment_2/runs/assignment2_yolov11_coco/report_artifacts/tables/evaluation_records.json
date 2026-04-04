@@ -1,0 +1,24 @@
+[
+  {
+    "model": "yolo11n",
+    "run_dir": "/content/drive/MyDrive/CO5085_DeepLearning_CV/runs/assignment2_yolov11_coco/yolo11n_coco",
+    "best_weight": "/content/drive/MyDrive/CO5085_DeepLearning_CV/runs/assignment2_yolov11_coco/yolo11n_coco/weights/best.pt",
+    "precision": 0.6417903664447685,
+    "recall": 0.4880794658318111,
+    "mAP50": 0.5315540726311953,
+    "mAP50-95": 0.37674502292949547,
+    "inference_ms_per_image": 210.1577389717102,
+    "val_dir": "/content/drive/MyDrive/CO5085_DeepLearning_CV/runs/assignment2_yolov11_coco/report_artifacts/detections/yolo11n_coco2"
+  },
+  {
+    "model": "yolo11s",
+    "run_dir": "/content/drive/MyDrive/CO5085_DeepLearning_CV/runs/assignment2_yolov11_coco/yolo11s_coco",
+    "best_weight": "/content/drive/MyDrive/CO5085_DeepLearning_CV/runs/assignment2_yolov11_coco/yolo11s_coco/weights/best.pt",
+    "precision": 0.6738099095069541,
+    "recall": 0.5592163945767712,
+    "mAP50": 0.6086703198271464,
+    "mAP50-95": 0.44393444420172073,
+    "inference_ms_per_image": 555.087527179718,
+    "val_dir": "/content/drive/MyDrive/CO5085_DeepLearning_CV/runs/assignment2_yolov11_coco/report_artifacts/detections/yolo11s_coco2"
+  }
+]
