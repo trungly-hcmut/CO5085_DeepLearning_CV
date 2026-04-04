@@ -1,0 +1,28 @@
+dataset_yaml: coco.yaml
+experiments:
+  yolo11n: yolo11n.pt
+  yolo11s: yolo11s.pt
+train_args:
+  data: coco.yaml
+  imgsz: 640
+  epochs: 5
+  batch: 16
+  workers: 4
+  project: /content/drive/MyDrive/CO5085_DeepLearning_CV/runs/assignment2_yolov11_coco
+  pretrained: true
+  optimizer: auto
+  seed: 42
+  patience: 20
+  cos_lr: true
+  close_mosaic: 10
+  save_period: 1
+  exist_ok: true
+run_dirs:
+  yolo11n: /content/drive/MyDrive/CO5085_DeepLearning_CV/runs/assignment2_yolov11_coco/yolo11n_coco
+  yolo11s: /content/drive/MyDrive/CO5085_DeepLearning_CV/runs/assignment2_yolov11_coco/yolo11s_coco
+best_weight_exists:
+  yolo11n: true
+  yolo11s: true
+last_weight_exists:
+  yolo11n: true
+  yolo11s: true

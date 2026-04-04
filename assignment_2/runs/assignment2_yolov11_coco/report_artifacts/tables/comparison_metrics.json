@@ -1,0 +1,18 @@
+[
+  {
+    "model":"yolo11s",
+    "precision":0.6738,
+    "recall":0.5592,
+    "mAP50":0.6087,
+    "mAP50-95":0.4439,
+    "inference_ms_per_image":556.06
+  },
+  {
+    "model":"yolo11n",
+    "precision":0.6418,
+    "recall":0.4881,
+    "mAP50":0.5316,
+    "mAP50-95":0.3767,
+    "inference_ms_per_image":214.84
+  }
+]
